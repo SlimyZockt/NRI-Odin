@@ -7,3 +7,7 @@ output_folder = "binding"
 import_lib = "test.lib"
 
 debug_dump_ast = true
+
+clang_include_paths = [
+	"/usr/lib/clang/21/include/"
+]

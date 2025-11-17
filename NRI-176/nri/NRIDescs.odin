@@ -1,8 +1,12 @@
 ﻿// © 2021 NVIDIA Corporation
 package nri
 
-foreign import lib "nri.lib"
-_ :: lib
+when ODIN_OS == .Linux {
+	foreign import lib {"libNRI.a", "libNRI_VK.a", "libNRI_Shared.a", "libNRI_Validation.a", "libNRI_NONE.a", "system:stdc++"}
+} else when ODIN_OS == .Windows {
+	foreign import lib {"libNRI.lib", "libNRI_VK.lib", "libNRI_Shared.lib", "libNRI_Validation.lib", "libNRI_NONE.lib"}
+}
+
 
 NriFence            :: struct {} // a synchronization primitive that can be used to insert a dependency between queue operations or between a queue operation and the host
 NriQueue            :: struct {} // a logical queue, providing access to a HW queue
