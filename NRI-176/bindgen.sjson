@@ -1,0 +1,20 @@
+inputs = [
+	"./Include/"
+	"./Include/Extensions/NRIWrapperVK.h"
+	"./Include/Extensions/NRIHelper.h"
+	"./Include/Extensions/NRIImgui.h"
+	"./Include/Extensions/NRILowLatency.h"
+	"./Include/Extensions/NRIMeshShader.h"
+	"./Include/Extensions/NRIRayTracing.h"
+	"./Include/Extensions/NRISwapChain.h"
+	"./Include/Extensions/NRIUpscaler.h"
+]
+
+clang_include_paths = [
+	"/usr/lib/clang/21/include/"
+]
+
+output_folder = "nri"
+package_name = "nri"
+import_lib = "nri.lib"
+
