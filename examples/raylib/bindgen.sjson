@@ -213,10 +213,6 @@ procedure_type_overrides = {
 
 procedures_at_end = true
 
-clang_include_paths = [
-"/usr/lib/clang/21/include/"
-]
-
 remove = [
 	"MemFree",
 	"IsGestureDetected",
