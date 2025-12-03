@@ -6,16 +6,15 @@ package nri
 when ODIN_OS == .Linux {
 	foreign import lib {"libNRI.a", "libNRI_VK.a", "libNRI_Shared.a", "libNRI_Validation.a", "libNRI_NONE.a", "system:stdc++"}
 } else when ODIN_OS == .Windows {
-	foreign import lib {"libNRI.lib", "libNRI_VK.lib", "libNRI_Shared.lib", "libNRI_Validation.lib", "libNRI_NONE.lib"}
+	foreign import lib {"libNRI.lib", "libNRI_VK.lib", "libNRI_Shared.lib", "libNRI_Validation.lib", "libNRI_NONE.lib", "system:stdc++"}
 }
 
 
 NRI_UPSCALER_H :: 1
 
-NriUpscaler     :: struct {}
-NriUpscalerType :: u8 // Name                                     // Notes
+Upscaler :: struct {}
 
-NriUpscalerType_ :: enum u32 {
+UpscalerType :: enum u32 {
 	NIS     = 0, // Name                                     // Notes
 	FSR     = 1, // Name                                     // Notes
 	XESS    = 2, // Name                                     // Notes
@@ -24,7 +23,7 @@ NriUpscalerType_ :: enum u32 {
 	MAX_NUM = 5, // Name                                     // Notes
 } // Name                                     // Notes
 
-NriUpscalerMode_ :: enum u32 {
+UpscalerMode :: enum u32 {
 	NATIVE            = 0, // Scaling factor       // Min jitter phases (or just use unclamped Halton2D)
 	ULTRA_QUALITY     = 1, // Scaling factor       // Min jitter phases (or just use unclamped Halton2D)
 	QUALITY           = 2, // Scaling factor       // Min jitter phases (or just use unclamped Halton2D)
@@ -34,79 +33,76 @@ NriUpscalerMode_ :: enum u32 {
 	MAX_NUM           = 6, // Scaling factor       // Min jitter phases (or just use unclamped Halton2D)
 } // Scaling factor       // Min jitter phases (or just use unclamped Halton2D)
 
-NriUpscalerMode :: u8 // Scaling factor       // Min jitter phases (or just use unclamped Halton2D)
-NriUpscalerBits :: u16
-
-NriUpscalerBits_ :: enum u32 {
-	NONE           = 0,
-	HDR            = 1,
-	SRGB           = 2,
-	USE_EXPOSURE   = 4,
-	USE_REACTIVE   = 8,
-	DEPTH_INVERTED = 16,
-	DEPTH_INFINITE = 32,
-	DEPTH_LINEAR   = 64,
-	MV_UPSCALED    = 128,
-	MV_JITTERED    = 256,
+UpscalerBits_ :: enum u32 {
+	HDR            = 0,
+	SRGB           = 1,
+	USE_EXPOSURE   = 2,
+	USE_REACTIVE   = 3,
+	DEPTH_INVERTED = 4,
+	DEPTH_INFINITE = 5,
+	DEPTH_LINEAR   = 6,
+	MV_UPSCALED    = 7,
+	MV_JITTERED    = 8,
 }
 
-NriDispatchUpscaleBits_ :: enum u32 {
-	NONE                = 0,
-	RESET_HISTORY       = 1,
-	USE_SPECULAR_MOTION = 2,
+UpscalerBits :: bit_set[UpscalerBits_; i32]
+
+DispatchUpscaleBits_ :: enum u32 {
+	RESET_HISTORY       = 0,
+	USE_SPECULAR_MOTION = 1,
 }
 
-NriDispatchUpscaleBits :: u8
+DispatchUpscaleBits :: bit_set[DispatchUpscaleBits_; i32]
 
-NriUpscalerDesc :: struct {
-	upscaleResolution: NriDim2_t,         // output resolution
-	type:              NriUpscalerType,
-	mode:              NriUpscalerMode,   // not needed for NIS
-	flags:             NriUpscalerBits,
-	preset:            u8,                // preset for DLSR or XESS (0 default, >1 presets A, B, C...)
-	commandBuffer:     ^NriCommandBuffer, // a non-copy-only command buffer in opened state, submission must be done manually ("wait for idle" executed, if not provided)
+UpscalerDesc :: struct {
+	upscaleResolution: Dim2_t,         // output resolution
+	type:              UpscalerType,
+	mode:              UpscalerMode,   // not needed for NIS
+	flags:             UpscalerBits,
+	preset:            u8,             // preset for DLSR or XESS (0 default, >1 presets A, B, C...)
+	commandBuffer:     ^CommandBuffer, // a non-copy-only command buffer in opened state, submission must be done manually ("wait for idle" executed, if not provided)
 }
 
-NriUpscalerProps :: struct {
-	scalingFactor:       f32,       // per dimension scaling factor
-	mipBias:             f32,       // mip bias for materials textures, computed as "-log2(scalingFactor) - 1" (keep an eye on normal maps)
-	upscaleResolution:   NriDim2_t, // output resolution
-	renderResolution:    NriDim2_t, // optimal render resolution
-	renderResolutionMin: NriDim2_t, // minimal render resolution (for Dynamic Resolution Scaling)
-	jitterPhaseNum:      u8,        // minimal number of phases in the jitter sequence, computed as "ceil(8 * scalingFactor ^ 2)" ("Halton(2, 3)" recommended)
+UpscalerProps :: struct {
+	scalingFactor:       f32,    // per dimension scaling factor
+	mipBias:             f32,    // mip bias for materials textures, computed as "-log2(scalingFactor) - 1" (keep an eye on normal maps)
+	upscaleResolution:   Dim2_t, // output resolution
+	renderResolution:    Dim2_t, // optimal render resolution
+	renderResolutionMin: Dim2_t, // minimal render resolution (for Dynamic Resolution Scaling)
+	jitterPhaseNum:      u8,     // minimal number of phases in the jitter sequence, computed as "ceil(8 * scalingFactor ^ 2)" ("Halton(2, 3)" recommended)
 }
 
-NriUpscalerResource :: struct {
-	texture:    ^NriTexture,
-	descriptor: ^NriDescriptor, // "SHADER_RESOURCE" or "SHADER_RESOURCE_STORAGE", see comments below
+UpscalerResource :: struct {
+	texture:    ^Texture,
+	descriptor: ^Descriptor, // "SHADER_RESOURCE" or "SHADER_RESOURCE_STORAGE", see comments below
 }
 
 // Guide buffers
-NriUpscalerGuides :: struct {
-	mv:       NriUpscalerResource, // .xy - surface motion
-	depth:    NriUpscalerResource, // .x - HW depth
-	exposure: NriUpscalerResource, // .x - 1x1 exposure
-	reactive: NriUpscalerResource, // .x - bias towards "input"
+UpscalerGuides :: struct {
+	mv:       UpscalerResource, // .xy - surface motion
+	depth:    UpscalerResource, // .x - HW depth
+	exposure: UpscalerResource, // .x - 1x1 exposure
+	reactive: UpscalerResource, // .x - bias towards "input"
 } // For FSR, XESS, DLSR
 
-NriDenoiserGuides :: struct {
-	mv:               NriUpscalerResource, // .xy - surface motion
-	depth:            NriUpscalerResource, // .x - HW or linear depth
-	normalRoughness:  NriUpscalerResource, // .xyz - world-space normal (not encoded), .w - linear roughness
-	diffuseAlbedo:    NriUpscalerResource, // .xyz - diffuse albedo (LDR sky color for sky)
-	specularAlbedo:   NriUpscalerResource, // .xyz - specular albedo (environment BRDF)
-	specularMvOrHitT: NriUpscalerResource, // .xy - specular virtual motion of the reflected world, or .x - specular hit distance otherwise
-	exposure:         NriUpscalerResource, // .x - 1x1 exposure
-	reactive:         NriUpscalerResource, // .x - bias towards "input"
-	sss:              NriUpscalerResource, // .x - subsurface scattering, computed as "Luminance(colorAfterSSS - colorBeforeSSS)"
+DenoiserGuides :: struct {
+	mv:               UpscalerResource, // .xy - surface motion
+	depth:            UpscalerResource, // .x - HW or linear depth
+	normalRoughness:  UpscalerResource, // .xyz - world-space normal (not encoded), .w - linear roughness
+	diffuseAlbedo:    UpscalerResource, // .xyz - diffuse albedo (LDR sky color for sky)
+	specularAlbedo:   UpscalerResource, // .xyz - specular albedo (environment BRDF)
+	specularMvOrHitT: UpscalerResource, // .xy - specular virtual motion of the reflected world, or .x - specular hit distance otherwise
+	exposure:         UpscalerResource, // .x - 1x1 exposure
+	reactive:         UpscalerResource, // .x - bias towards "input"
+	sss:              UpscalerResource, // .x - subsurface scattering, computed as "Luminance(colorAfterSSS - colorBeforeSSS)"
 } // For DLRR
 
 // Settings
-NriNISSettings :: struct {
+NISSettings :: struct {
 	sharpness: f32, // [0; 1]
 }
 
-NriFSRSettings :: struct {
+FSRSettings :: struct {
 	zNear:                   f32, // distance to the near plane (units)
 	zFar:                    f32, // distance to the far plane, unused if "DEPTH_INFINITE" is set (units)
 	verticalFov:             f32, // vertical field of view angle (radians)
@@ -115,45 +111,45 @@ NriFSRSettings :: struct {
 	sharpness:               f32, // [0; 1]
 }
 
-NriDLRRSettings :: struct {
+DLRRSettings :: struct {
 	worldToViewMatrix: [16]f32, // {Xx, Yx, Zx, 0, Xy, Yy, Zy, 0, Xz, Yz, Zz, 0, Tx, Ty, Tz, 1}, where {X, Y, Z} - axises, T - translation
 	viewToClipMatrix:  [16]f32, // {-, -, -, 0, -, -, -, 0, -, -, -, A, -, -, -, B}, where {A; B} = {0; 1} for ortho or {-1/+1; 0} for perspective projections
 }
 
-NriDispatchUpscaleDesc :: struct {
+DispatchUpscaleDesc :: struct {
 	// Output (required "SHADER_RESOURCE_STORAGE" for resource state & descriptor)
-	output: NriUpscalerResource, // .xyz - upscaled RGB color
+	output: UpscalerResource, // .xyz - upscaled RGB color
 
 	// Input (required "SHADER_RESOURCE" for resource state & descriptor)
-	input: NriUpscalerResource, // .xyz - input RGB color
+	input: UpscalerResource, // .xyz - input RGB color
 
 	guides: struct #raw_union {
-		upscaler: NriUpscalerGuides, //      FSR, XESS, DLSR
-		denoiser: NriDenoiserGuides, //      DLRR (sRGB not supported)
+		upscaler: UpscalerGuides, //      FSR, XESS, DLSR
+		denoiser: DenoiserGuides, //      DLRR (sRGB not supported)
 	},
 
 	settings: struct #raw_union {
-		nis:  NriNISSettings,  //      NIS settings
-		fsr:  NriFSRSettings,  //      FSR settings
-		dlrr: NriDLRRSettings, //      DLRR settings
+		nis:  NISSettings,  //      NIS settings
+		fsr:  FSRSettings,  //      FSR settings
+		dlrr: DLRRSettings, //      DLRR settings
 	},
 
-	currentResolution: NriDim2_t,   // current render resolution for inputs and guides, renderResolutionMin <= currentResolution <= renderResolution
-	cameraJitter:      NriFloat2_t, // pointing towards the pixel center, in [-0.5; 0.5] range
-	mvScale:           NriFloat2_t, // used to convert motion vectors to pixel space
-	flags:             NriDispatchUpscaleBits,
+	currentResolution: Dim2_t,   // current render resolution for inputs and guides, renderResolutionMin <= currentResolution <= renderResolution
+	cameraJitter:      Float2_t, // pointing towards the pixel center, in [-0.5; 0.5] range
+	mvScale:           Float2_t, // used to convert motion vectors to pixel space
+	flags:             DispatchUpscaleBits,
 }
 
 // Threadsafe: yes
-NriUpscalerInterface :: struct {
-	CreateUpscaler:      proc "c" (device: ^NriDevice, upscalerDesc: ^NriUpscalerDesc, upscaler: ^^NriUpscaler) -> NriResult,
-	DestroyUpscaler:     proc "c" (upscaler: ^NriUpscaler),
-	IsUpscalerSupported: proc "c" (device: ^NriDevice, type: NriUpscalerType) -> bool,
-	GetUpscalerProps:    proc "c" (upscaler: ^NriUpscaler, upscalerProps: ^NriUpscalerProps),
+UpscalerInterface :: struct {
+	CreateUpscaler:      proc "c" (device: ^Device, upscalerDesc: ^UpscalerDesc, upscaler: ^^Upscaler) -> Result,
+	DestroyUpscaler:     proc "c" (upscaler: ^Upscaler),
+	IsUpscalerSupported: proc "c" (device: ^Device, type: UpscalerType) -> bool,
+	GetUpscalerProps:    proc "c" (upscaler: ^Upscaler, upscalerProps: ^UpscalerProps),
 
 	// Command buffer
 	// {
 	// Dispatch (changes descriptor pool, pipeline layout and pipeline, barriers are externally controlled)
-	CmdDispatchUpscale: proc "c" (commandBuffer: ^NriCommandBuffer, upscaler: ^NriUpscaler, dispatchUpscaleDesc: ^NriDispatchUpscaleDesc),
+	CmdDispatchUpscale: proc "c" (commandBuffer: ^CommandBuffer, upscaler: ^Upscaler, dispatchUpscaleDesc: ^DispatchUpscaleDesc),
 }
 

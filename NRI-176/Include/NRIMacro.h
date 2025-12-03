@@ -229,17 +229,15 @@
     #define _NRI_ENUM_ENTRY(index, prefix, ...) NRI_MERGE_TOKENS(prefix, NRI_VA_ARGS_AT(index, __VA_ARGS__))
     #define _NRI_ENUM_EXPAND(prefix, ...) NRI_SEQN(_NRI_ENUM_ENTRY, NRI_NARGS(__VA_ARGS__), prefix, __VA_ARGS__)
     #define NriEnum(name, type, ...) \
-        typedef type Nri(name); \
-        typedef enum NRI_NAME_(name) { \
+        typedef enum Nri(name) { \
             _NRI_ENUM_EXPAND(NRI_NAME_(name), __VA_ARGS__), \
             NRI_MERGE_TOKENS(NRI_NAME_(name), MAX_NUM), \
-        } NRI_NAME_(name)
+        } Nri(name)
 
     #define NriBits(name, type, ...) \
-        typedef type Nri(name); \
-        typedef enum NRI_NAME_(name) { \
+        typedef enum Nri(name) { \
             _NRI_ENUM_EXPAND(NRI_NAME_(name), __VA_ARGS__), \
-        } NRI_NAME_(name)
+        } Nri(name)
 
     #define NriDeref(arg) (arg)
     #define NriDefault(arg)

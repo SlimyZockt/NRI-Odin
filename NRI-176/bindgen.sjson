@@ -16,6 +16,35 @@ clang_include_paths = [
 	"/usr/lib/clang/21/include/"
 ]
 
+bit_setify = {
+    "NriUpscalerBits" = "UpscalerBits_"
+    "NriDispatchUpscaleBits" = "DispatchUpscaleBits_"
+    "NriSwapChainBits" = "SwapChainBits_"
+    "NriRayTracingPipelineBits" = "RayTracingPipelineBits_"
+    "NriMicromapBits" = "MicromapBits_"
+    "NriBottomLevelGeometryBits" = "BottomLevelGeometryBits_"
+    "NriTopLevelInstanceBits" = "TopLevelInstanceBits_"
+    "NriAccelerationStructureBits" = "AccelerationStructureBits_"
+    "NriPlaneBits" = "PlaneBits_"
+    "NriFormatSupportBits" = "FormatSupportBits_"
+    "NriStageBits" = "StageBits_"
+    "NriAccessBits" = "AccessBits_"
+    "NriTextureUsageBits" = "TextureUsageBits_"
+    "NriBufferUsageBits" = "BufferUsageBits_"
+    "NriPipelineLayoutBits" = "PipelineLayoutBits_"
+    "NriDescriptorPoolBits" = "DescriptorPoolBits_"
+    "NriDescriptorSetBits" = "DescriptorSetBits_"
+    "NriDescriptorRangeBits" = "DescriptorRangeBits_"
+    "NriColorWriteBits" = "ColorWriteBits_"
+}
+
+remove_type_prefix = "Nri"
+remove_macro_prefix = "Nri"
+remove_function_prefix = "nri"
+
+procedures_at_end = true
+
+
 output_folder = "nri"
 package_name = "nri"
 imports_file = "imports.odin"

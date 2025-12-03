@@ -6,7 +6,7 @@ package nri
 when ODIN_OS == .Linux {
 	foreign import lib {"libNRI.a", "libNRI_VK.a", "libNRI_Shared.a", "libNRI_Validation.a", "libNRI_NONE.a", "system:stdc++"}
 } else when ODIN_OS == .Windows {
-	foreign import lib {"libNRI.lib", "libNRI_VK.lib", "libNRI_Shared.lib", "libNRI_Validation.lib", "libNRI_NONE.lib"}
+	foreign import lib {"libNRI.lib", "libNRI_VK.lib", "libNRI_Shared.lib", "libNRI_Validation.lib", "libNRI_NONE.lib", "system:stdc++"}
 }
 
 
@@ -18,46 +18,46 @@ VKFlags                 :: u32
 VKNonDispatchableHandle :: u64
 
 // A collection of queues of the same type
-NriQueueFamilyVKDesc :: struct {
+QueueFamilyVKDesc :: struct {
 	queueNum:    u32,
-	queueType:   NriQueueType,
+	queueType:   QueueType,
 	familyIndex: u32,
 }
 
-NriDeviceCreationVKDesc :: struct {
-	callbackInterface:   NriCallbackInterface,
-	allocationCallbacks: NriAllocationCallbacks,
+DeviceCreationVKDesc :: struct {
+	callbackInterface:   CallbackInterface,
+	allocationCallbacks: AllocationCallbacks,
 	libraryPath:         cstring,
-	vkBindingOffsets:    NriVKBindingOffsets,
-	vkExtensions:        NriVKExtensions, // enabled
+	vkBindingOffsets:    VKBindingOffsets,
+	vkExtensions:        VKExtensions, // enabled
 	vkInstance:          VKHandle,
 	vkDevice:            VKHandle,
 	vkPhysicalDevice:    VKHandle,
-	queueFamilies:       ^NriQueueFamilyVKDesc,
+	queueFamilies:       ^QueueFamilyVKDesc,
 	queueFamilyNum:      u32,
-	minorVersion:        u8,              // >= 2
+	minorVersion:        u8,           // >= 2
 
 	// Switches (disabled by default)
 	enableNRIValidation:            bool,
 	enableMemoryZeroInitialization: bool, // page-clears are fast, but memory is not cleared by default in VK
 }
 
-NriCommandAllocatorVKDesc :: struct {
+CommandAllocatorVKDesc :: struct {
 	vkCommandPool: VKNonDispatchableHandle,
-	queueType:     NriQueueType,
+	queueType:     QueueType,
 }
 
-NriCommandBufferVKDesc :: struct {
+CommandBufferVKDesc :: struct {
 	vkCommandBuffer: VKHandle,
-	queueType:       NriQueueType,
+	queueType:       QueueType,
 }
 
-NriDescriptorPoolVKDesc :: struct {
+DescriptorPoolVKDesc :: struct {
 	vkDescriptorPool:    VKNonDispatchableHandle,
 	descriptorSetMaxNum: u32,
 }
 
-NriBufferVKDesc :: struct {
+BufferVKDesc :: struct {
 	vkBuffer:        VKNonDispatchableHandle,
 	size:            u64,
 	structureStride: u32,                     // must be provided if used as a structured or raw buffer
@@ -66,19 +66,19 @@ NriBufferVKDesc :: struct {
 	deviceAddress:   u64,                     // must be provided for ray tracing
 }
 
-NriTextureVKDesc :: struct {
+TextureVKDesc :: struct {
 	vkImage:     VKNonDispatchableHandle,
 	vkFormat:    VKEnum,
 	vkImageType: VKEnum,
-	width:       NriDim_t,
-	height:      NriDim_t,
-	depth:       NriDim_t,
-	mipNum:      NriDim_t,
-	layerNum:    NriDim_t,
-	sampleNum:   NriSample_t,
+	width:       Dim_t,
+	height:      Dim_t,
+	depth:       Dim_t,
+	mipNum:      Dim_t,
+	layerNum:    Dim_t,
+	sampleNum:   Sample_t,
 }
 
-NriMemoryVKDesc :: struct {
+MemoryVKDesc :: struct {
 	vkDeviceMemory:  VKNonDispatchableHandle,
 	offset:          u64,
 	mappedMemory:    rawptr, // at "offset"
@@ -86,50 +86,50 @@ NriMemoryVKDesc :: struct {
 	memoryTypeIndex: u32,
 }
 
-NriPipelineVKDesc :: struct {
+PipelineVKDesc :: struct {
 	vkPipeline:          VKNonDispatchableHandle,
 	vkPipelineBindPoint: VKEnum,
 }
 
-NriQueryPoolVKDesc :: struct {
+QueryPoolVKDesc :: struct {
 	vkQueryPool: VKNonDispatchableHandle,
 	vkQueryType: VKEnum,
 }
 
-NriFenceVKDesc :: struct {
+FenceVKDesc :: struct {
 	vkTimelineSemaphore: VKNonDispatchableHandle,
 }
 
-NriAccelerationStructureVKDesc :: struct {
+AccelerationStructureVKDesc :: struct {
 	vkAccelerationStructure: VKNonDispatchableHandle,
 	vkBuffer:                VKNonDispatchableHandle,
 	bufferSize:              u64,
 	buildScratchSize:        u64,
 	updateScratchSize:       u64,
-	flags:                   NriAccelerationStructureBits,
+	flags:                   AccelerationStructureBits,
 }
 
 // Threadsafe: yes
-NriWrapperVKInterface :: struct {
-	CreateCommandAllocatorVK:      proc "c" (device: ^NriDevice, commandAllocatorVKDesc: ^NriCommandAllocatorVKDesc, commandAllocator: ^^NriCommandAllocator) -> NriResult,
-	CreateCommandBufferVK:         proc "c" (device: ^NriDevice, commandBufferVKDesc: ^NriCommandBufferVKDesc, commandBuffer: ^^NriCommandBuffer) -> NriResult,
-	CreateDescriptorPoolVK:        proc "c" (device: ^NriDevice, descriptorPoolVKDesc: ^NriDescriptorPoolVKDesc, descriptorPool: ^^NriDescriptorPool) -> NriResult,
-	CreateBufferVK:                proc "c" (device: ^NriDevice, bufferVKDesc: ^NriBufferVKDesc, buffer: ^^NriBuffer) -> NriResult,
-	CreateTextureVK:               proc "c" (device: ^NriDevice, textureVKDesc: ^NriTextureVKDesc, texture: ^^NriTexture) -> NriResult,
-	CreateMemoryVK:                proc "c" (device: ^NriDevice, memoryVKDesc: ^NriMemoryVKDesc, memory: ^^NriMemory) -> NriResult,
-	CreatePipelineVK:              proc "c" (device: ^NriDevice, pipelineVKDesc: ^NriPipelineVKDesc, pipeline: ^^NriPipeline) -> NriResult,
-	CreateQueryPoolVK:             proc "c" (device: ^NriDevice, queryPoolVKDesc: ^NriQueryPoolVKDesc, queryPool: ^^NriQueryPool) -> NriResult,
-	CreateFenceVK:                 proc "c" (device: ^NriDevice, fenceVKDesc: ^NriFenceVKDesc, fence: ^^NriFence) -> NriResult,
-	CreateAccelerationStructureVK: proc "c" (device: ^NriDevice, accelerationStructureVKDesc: ^NriAccelerationStructureVKDesc, accelerationStructure: ^^NriAccelerationStructure) -> NriResult,
-	GetQueueFamilyIndexVK:         proc "c" (queue: ^NriQueue) -> u32,
-	GetPhysicalDeviceVK:           proc "c" (device: ^NriDevice) -> VKHandle,
-	GetInstanceVK:                 proc "c" (device: ^NriDevice) -> VKHandle,
-	GetInstanceProcAddrVK:         proc "c" (device: ^NriDevice) -> rawptr,
-	GetDeviceProcAddrVK:           proc "c" (device: ^NriDevice) -> rawptr,
+WrapperVKInterface :: struct {
+	CreateCommandAllocatorVK:      proc "c" (device: ^Device, commandAllocatorVKDesc: ^CommandAllocatorVKDesc, commandAllocator: ^^CommandAllocator) -> Result,
+	CreateCommandBufferVK:         proc "c" (device: ^Device, commandBufferVKDesc: ^CommandBufferVKDesc, commandBuffer: ^^CommandBuffer) -> Result,
+	CreateDescriptorPoolVK:        proc "c" (device: ^Device, descriptorPoolVKDesc: ^DescriptorPoolVKDesc, descriptorPool: ^^DescriptorPool) -> Result,
+	CreateBufferVK:                proc "c" (device: ^Device, bufferVKDesc: ^BufferVKDesc, buffer: ^^Buffer) -> Result,
+	CreateTextureVK:               proc "c" (device: ^Device, textureVKDesc: ^TextureVKDesc, texture: ^^Texture) -> Result,
+	CreateMemoryVK:                proc "c" (device: ^Device, memoryVKDesc: ^MemoryVKDesc, memory: ^^Memory) -> Result,
+	CreatePipelineVK:              proc "c" (device: ^Device, pipelineVKDesc: ^PipelineVKDesc, pipeline: ^^Pipeline) -> Result,
+	CreateQueryPoolVK:             proc "c" (device: ^Device, queryPoolVKDesc: ^QueryPoolVKDesc, queryPool: ^^QueryPool) -> Result,
+	CreateFenceVK:                 proc "c" (device: ^Device, fenceVKDesc: ^FenceVKDesc, fence: ^^Fence) -> Result,
+	CreateAccelerationStructureVK: proc "c" (device: ^Device, accelerationStructureVKDesc: ^AccelerationStructureVKDesc, accelerationStructure: ^^AccelerationStructure) -> Result,
+	GetQueueFamilyIndexVK:         proc "c" (queue: ^Queue) -> u32,
+	GetPhysicalDeviceVK:           proc "c" (device: ^Device) -> VKHandle,
+	GetInstanceVK:                 proc "c" (device: ^Device) -> VKHandle,
+	GetInstanceProcAddrVK:         proc "c" (device: ^Device) -> rawptr,
+	GetDeviceProcAddrVK:           proc "c" (device: ^Device) -> rawptr,
 }
 
-@(default_calling_convention="c")
+@(default_calling_convention="c", link_prefix="nri")
 foreign lib {
-	nriCreateDeviceFromVKDevice :: proc(deviceDesc: ^NriDeviceCreationVKDesc, device: ^^NriDevice) -> NriResult ---
+	CreateDeviceFromVKDevice :: proc(deviceDesc: ^DeviceCreationVKDesc, device: ^^Device) -> Result ---
 }
 
